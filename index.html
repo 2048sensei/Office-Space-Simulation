@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="纯前端的办公室平面布局工具：拖拽摆放、尺寸标注、智能吸附、撤销重做，支持导出 JSON 与图片，数据保存在浏览器本地。">
+<meta name="color-scheme" content="dark light">
+<title>办公室布局 · 平面规划</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <path d="M3 10h7V3M10 10v11M14 10h7M14 14h7"></path>
+      </svg>
+    </span>
+    <div class="brand-text">
+      <h1>办公室布局 <span class="brand-en">Office Layout Studio</span></h1>
+      <p>拖拽摆放 · 尺寸标注 · 智能吸附 · 本地保存</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn ghost icon" id="btnUndo" title="撤销 (Ctrl+Z)" aria-label="撤销">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a6 6 0 0 1 0 12h-2"></path></svg>
+    </button>
+    <button type="button" class="btn ghost icon" id="btnRedo" title="重做 (Ctrl+Shift+Z)" aria-label="重做">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a6 6 0 0 0 0 12h2"></path></svg>
+    </button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="btn ghost icon" id="btnTheme" title="切换明暗主题" aria-label="切换明暗主题">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"></path></svg>
+    </button>
+    <button type="button" class="btn ghost" id="btnHelp" title="快捷键与使用说明">快捷键</button>
+  </div>
+</header>
+
+<main class="app-main">
+  <section class="toolbar" aria-label="工具栏">
+    <div class="toolbar-row">
+      <div class="toolbar-group">
+      <span class="toolbar-title">房间</span>
+      <label class="field compact">宽
+        <input type="number" id="roomW" value="960" min="100" max="2000" step="10" inputmode="numeric">
+      </label>
+      <label class="field compact">深
+        <input type="number" id="roomD" value="720" min="100" max="2000" step="10" inputmode="numeric">
+      </label>
+      <button type="button" class="btn" id="applyRoom">应用</button>
+      <label class="field compact">示例
+        <select id="presetSelect"></select>
+      </label>
+    </div>
+
+    <div class="toolbar-group">
+      <span class="toolbar-title">添加</span>
+      <label class="field">类型
+        <select id="fType"></select>
+      </label>
+      <label class="field compact">宽
+        <input type="number" id="fW" value="80" min="10" max="500" step="5">
+      </label>
+      <label class="field compact">深
+        <input type="number" id="fD" value="60" min="10" max="500" step="5">
+      </label>
+      <button type="button" class="btn primary" id="addFurn">添加</button>
+    </div>
+
+    <div class="toolbar-group">
+      <span class="toolbar-title">编辑</span>
+      <button type="button" class="btn" id="btnMeasure" title="在画布上点两点测距 (M)">测距</button>
+      <button type="button" class="btn" id="btnCopy" title="复制选中家具 (Ctrl+D)">复制</button>
+      <button type="button" class="btn" id="btnRotate" title="顺时针旋转 90° (R)">旋转</button>
+      <button type="button" class="btn danger" id="btnDel" title="删除选中 (Delete)">删除</button>
+      <button type="button" class="btn" id="btnClear">清空</button>
+    </div>
+
+    </div>
+
+    <div class="toolbar-row">
+      <div class="toolbar-group">
+        <span class="toolbar-title">视图</span>
+      <label class="check"><input type="checkbox" id="showGrid" checked> 网格</label>
+      <label class="field compact">吸附
+        <select id="snapStep">
+          <option value="1">1 cm</option>
+          <option value="5" selected>5 cm</option>
+          <option value="10">10 cm</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="showDims" checked> 尺寸</label>
+      <div class="zoom-group" role="group" aria-label="缩放">
+        <button type="button" class="btn icon" id="zoomOut" title="缩小 (-)" aria-label="缩小">−</button>
+        <button type="button" class="btn ghost zoom-label" id="zoomReset" title="恢复默认缩放 (0)"><span id="zoomLabel">100%</span></button>
+        <button type="button" class="btn icon" id="zoomIn" title="放大 (+)" aria-label="放大">＋</button>
+      </div>
+    </div>
+
+    <div class="toolbar-group toolbar-group-end">
+      <span class="toolbar-title">文件</span>
+      <button type="button" class="btn" id="exportPng">导出图片</button>
+      <button type="button" class="btn" id="exportJson">导出 JSON</button>
+      <button type="button" class="btn" id="importJson">导入</button>
+      <button type="button" class="btn" id="copyText">复制清单</button>
+      <button type="button" class="btn" id="printBtn">打印</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    </div>
+  </section>
+
+  <div class="workspace">
+    <section class="canvas-panel" aria-label="平面图">
+      <div class="stage-scroll" id="stageScroll">
+        <div class="stage-holder">
+          <div id="stage" class="stage" role="application" aria-label="办公室平面图，可拖拽家具">
+            <div class="grid-layer" id="gridLayer" aria-hidden="true"></div>
+            <div class="furn-layer" id="furnLayer"></div>
+            <svg class="overlay" id="guides" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+            <svg class="overlay" id="dims" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+            <div class="room-dim room-dim-w" id="roomDimW">960 cm</div>
+            <div class="room-dim room-dim-d" id="roomDimD">720 cm</div>
+          </div>
+          <p class="empty-hint" id="emptyHint">
+            从上方「添加」放一件家具，或选一套示例布局开始
+          </p>
+        </div>
+      </div>
+
+      <div class="statusbar">
+        <span class="status-item" id="coordReadout">x — · y —</span>
+        <span class="status-sep" aria-hidden="true"></span>
+        <span class="status-item grow" id="selectionInfo">未选中家具</span>
+        <span class="status-item" id="measureInfo" hidden></span>
+        <span class="save-state" id="saveState">已保存</span>
+      </div>
+    </section>
+
+    <aside class="sidebar" aria-label="属性与清单">
+      <section class="card">
+        <h2 class="card-title">属性</h2>
+        <p class="card-empty" id="propEmpty">点击画布中的家具进行编辑</p>
+        <form class="prop-form" id="propForm" hidden autocomplete="off">
+          <div class="prop-head">
+            <span class="dot" id="propDot" aria-hidden="true"></span>
+            <input type="text" id="propName" class="prop-name" maxlength="20" aria-label="家具名称">
+          </div>
+
+          <div class="grid2">
+            <label class="field">X <input type="number" id="propX" step="1"></label>
+            <label class="field">Y <input type="number" id="propY" step="1"></label>
+            <label class="field">宽 <input type="number" id="propW" step="5" min="10" max="500"></label>
+            <label class="field">深 <input type="number" id="propD" step="5" min="10" max="500"></label>
+          </div>
+
+          <label class="field hidden" id="propDeskRow">桌子规格
+            <select id="propDesk"></select>
+          </label>
+
+          <div class="grid2">
+            <label class="field">旋转
+              <select id="propRot">
+                <option value="0">0°</option>
+                <option value="90">90°</option>
+                <option value="180">180°</option>
+                <option value="270">270°</option>
+              </select>
+            </label>
+            <label class="field">颜色
+              <input type="color" id="propColor" class="color-input">
+            </label>
+          </div>
+
+          <p class="gaps" id="propGaps"></p>
+
+          <div class="prop-actions">
+            <button type="button" class="btn primary" id="propApply">应用</button>
+            <button type="button" class="btn" id="propRotate">旋转 90°</button>
+            <button type="button" class="btn" id="propCopy">复制</button>
+            <button type="button" class="btn" id="propColorAll" title="把当前颜色应用到同款家具">同款改色</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card card-list">
+        <h2 class="card-title">家具清单 <span class="badge" id="itemCount">0</span></h2>
+        <div class="item-list" id="itemList"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">统计</h2>
+        <div class="stats" id="stats"></div>
+        <button type="button" class="btn tiny danger hidden" id="btnTidy">整理重叠的家具</button>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<footer class="app-footer">
+  <span>数据自动保存在浏览器本地 · 支持导入 / 导出 JSON</span>
+  <span class="footer-right">v2.0 · <a href="LICENSE">MIT License</a></span>
+</footer>
+
+<dialog id="helpDialog" class="help-dialog">
+  <form method="dialog" class="help-inner">
+    <h2>快捷键 &amp; 使用技巧</h2>
+    <dl class="shortcuts">
+      <dt>拖动家具</dt><dd>按住鼠标/手指拖动，靠近墙或其它家具时自动吸附</dd>
+      <dt>缩放</dt><dd>选中后拖动 8 个白色手柄；桌子会吸附到标准规格</dd>
+      <dt>旋转</dt><dd>拖顶部圆点、按 <kbd>R</kbd>，或 <kbd>Shift</kbd> + 点击家具</dd>
+      <dt>复制</dt><dd><kbd>Ctrl</kbd> + <kbd>D</kbd>，或按住 <kbd>Ctrl</kbd> 拖动</dd>
+      <dt>删除</dt><dd><kbd>Delete</kbd> / <kbd>Backspace</kbd></dd>
+      <dt>微调位置</dt><dd>方向键移动 5cm，<kbd>Shift</kbd> + 方向键移动 1cm</dd>
+      <dt>撤销 / 重做</dt><dd><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></dd>
+      <dt>测距</dt><dd>按 <kbd>M</kbd> 或点「测距」，画布上点击两点</dd>
+      <dt>缩放视图</dt><dd><kbd>+</kbd> / <kbd>-</kbd>，<kbd>0</kbd> 恢复</dd>
+      <dt>取消</dt><dd><kbd>Esc</kbd> 取消选中 / 退出测距</dd>
+    </dl>
+    <p class="help-note">提示：把导出的 JSON 文件直接拖进画布即可导入。</p>
+    <div class="help-actions">
+      <button class="btn primary" value="close">知道了</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/geometry.js" defer></script>
+<script src="assets/js/catalog.js" defer></script>
+<script src="assets/js/presets.js" defer></script>
+<script src="assets/js/store.js" defer></script>
+<script src="assets/js/renderer.js" defer></script>
+<script src="assets/js/app.js" defer></script>
+</body>
+</html>

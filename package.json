@@ -1,0 +1,25 @@
+{
+  "name": "office-layout-studio",
+  "version": "2.0.0",
+  "private": true,
+  "description": "纯前端的办公室平面布局工具：拖拽摆放、尺寸标注、智能吸附、撤销重做，支持导出 JSON 与图片。",
+  "keywords": [
+    "office",
+    "floorplan",
+    "layout",
+    "canvas",
+    "vanilla-js",
+    "static-site"
+  ],
+  "license": "MIT",
+  "author": "2048sensei",
+  "scripts": {
+    "test": "node tests/geometry.test.js && node tests/store.test.js && node tests/presets.test.js",
+    "test:e2e": "node tests/e2e.mjs",
+    "lint": "node tools/check-syntax.mjs",
+    "serve": "node tools/serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
